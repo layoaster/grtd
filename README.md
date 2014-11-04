@@ -1,6 +1,6 @@
 # Data Proccesing for G's Graphic Real Time Display System (GRTD)
 
-## Files:
+### Files:
 
 1. agentcodes.py
 
@@ -8,28 +8,28 @@ By default both mysql and mongo connections parameters are set for a localhost c
 
 **MySQL:** line 22
 ```
-		mysql_config = {
-		    'user':             'user',
-		    'password':         'pass',
-		    'host':             'localhost',
-		    'database':         'db',
-		    'raise_on_warnings':True,
-		}
+mysql_config = {
+    'user':             'user',
+    'password':         'pass',
+    'host':             'localhost',
+    'database':         'db',
+    'raise_on_warnings':True,
+}
 ```
 **MongoDB:** line 200
 ```
-		client = pymongo.MongoClient(host='localhost', port='27017')
+client = pymongo.MongoClient(host='localhost', port='27017')
 ```
 **Logging:** the script is designed to log some events, you can set the level by modifying the line 177:
 ```
-		logger.setLevel(logging.LEVEL)
+logger.setLevel(logging.LEVEL)
 ```
 Levels of logging, from highest urgency to lowest urgency, are:
-	    * CRITICAL
-	    * ERROR
-	    * WARNING
-	    * INFO
-	    * DEBUG
+* CRITICAL
+* ERROR
+* WARNING
+* INFO
+* DEBUG
 
 Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
 
@@ -39,7 +39,6 @@ Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
 **Usage:**
     show_stats.py - displays info of every agent.
     show_stats.py ldap - displays info for the agent with ldap specified
-
 
 
 3. reset_agent.js
