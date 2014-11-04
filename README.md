@@ -1,12 +1,10 @@
 # Data Proccesing for G's Graphic Real Time Display System (GRTD)
 
-### Files:
-
-#### agentcodes.py
+### agentcodes.py
 
 By default both mysql and mongo connections parameters are set for a localhost connections, to modify go to:
 
-1. MySQL:
+* MySQL:
 ```pyhton
 mysql_config = {
     'user':             'user',
@@ -17,7 +15,7 @@ mysql_config = {
 }
 ```
 
-2. MongoDB:
+* MongoDB:
 ```pyhton
 client = pymongo.MongoClient(host='localhost', port='27017')
 ```
@@ -35,18 +33,18 @@ Levels of logging, from highest urgency to lowest urgency, are:
 
 Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
 
-#### show_stats.py
+### show_stats.py
 
 **Usage:**
-    show_stats.py - displays info of every agent.
-    show_stats.py ldap - displays info for the agent with ldap specified
+    > show_stats.py - displays info of every agent.
+    > show_stats.py ldap - displays info for the agent with ldap specified
 
 
-#### reset_agent.js
+### reset_agent.js
 
 Mongo Shell script to add and index (ldap) on the agentStatus collections, since the data is collected on daily basis is strongly recommended to run this script on a certain time every day to get the expected results.
 
 
-#### index_agent.js
+###index_agent.js
 
 Mongo Shell script to add and index (ldap) on the agentStatus collections to increase performance.
