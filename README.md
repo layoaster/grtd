@@ -1,12 +1,13 @@
-Data Proccesing for G's Graphic Real Time Display System (GRTD)
+# Data Proccesing for G's Graphic Real Time Display System (GRTD)
 
-=============
-agentcodes.py
-=============
+## Files:
 
--By default both mysql and mongo connections parameters are set for a localhost connections, to modify go to:
+1. agentcodes.py
 
-*MySQL: line 22
+By default both mysql and mongo connections parameters are set for a localhost connections, to modify go to:
+
+**MySQL:** line 22
+```
 		mysql_config = {
 		    'user':             'user',
 		    'password':         'pass',
@@ -14,43 +15,38 @@ agentcodes.py
 		    'database':         'db',
 		    'raise_on_warnings':True,
 		}
-
-*MongoDB: line 200
-
+```
+**MongoDB:** line 200
+```
 		client = pymongo.MongoClient(host='localhost', port='27017')
-
--Logging: the script is designed to log some events, you can set the level by modifying the line 177:
-
+```
+**Logging:** the script is designed to log some events, you can set the level by modifying the line 177:
+```
 		logger.setLevel(logging.LEVEL)
-
-	Levels of logging, from highest urgency to lowest urgency, are:
+```
+Levels of logging, from highest urgency to lowest urgency, are:
 	    * CRITICAL
 	    * ERROR
 	    * WARNING
 	    * INFO
 	    * DEBUG
 
-    Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
+Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
 
 
-=============
-show_stats.py
-=============
+2. show_stats.py
 
--Usage:
+**Usage:**
     show_stats.py - displays info of every agent.
     show_stats.py ldap - displays info for the agent with ldap specified
 
 
-==============
-reset_agent.js
-==============
 
--Mongo Shell script to add and index (ldap) on the agentStatus collections, since the data is collected on daily basis is strongly recommended to run this script on a certain time every day to get the expected results.
+3. reset_agent.js
+
+Mongo Shell script to add and index (ldap) on the agentStatus collections, since the data is collected on daily basis is strongly recommended to run this script on a certain time every day to get the expected results.
 
 
-==============
-index_agent.js
-==============
+4. index_agent.js
 
--Mongo Shell script to add and index (ldap) on the agentStatus collections to increase performance.
+Mongo Shell script to add and index (ldap) on the agentStatus collections to increase performance.
