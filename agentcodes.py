@@ -25,7 +25,7 @@ mysql_config = {
     'password':         'pass',
     'host':             'localhost',
     'database':         'db',
-    'raise_on_warnings':True,
+    'raise_on_warnings': True,
 }
 
 MAX_AGENTS = 300
@@ -150,7 +150,6 @@ def getRawInfo():
             total_agents.add(agent_name) 
 
             agent.fromMySQL(login_id, agent_name,reason, tstamp, elapsed_time)
-            # agent.printData()
             agent.dataUpdate(agent_stats)
         else:
             break
@@ -198,12 +197,12 @@ if __name__ == "__main__":
 
     ### Connecting to the MongoDB database
     try:
-        client = pymongo.MongoClient()
+        client = pymongo.MongoClient('mongodb://user:pass@localhost/database')
     except pymongo.errors.ConnectionFailure:
         logger.critical("MongoDB: cannot connect to server")
         exit(-1)
 
-    db = client.test
+    db = client.grtd
     agent_stats = db.agentStatus
 
     while (1):

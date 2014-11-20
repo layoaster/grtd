@@ -53,12 +53,12 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signalHandler)
 
     try:
-        client = pymongo.MongoClient('localhost', 27017)
+        client = pymongo.MongoClient('mongodb://user:pass@localhost/database')
     except pymongo.errors.ConnectionFailure:
         print "MongoDB: connection failure"
         exit(-1)
 
-    db = client.test
+    db = client.grtd
     agent_stats = db.agentStatus
 
     if len(sys.argv) > 1:
