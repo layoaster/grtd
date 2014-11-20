@@ -29,12 +29,17 @@ def refreshData(ldap=None):
                 print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
             print '+--------------------+-----------+--------------------+-------+----------+'
     else:
-        agent = agent_stats.find_one({'ldap':ldap})
-        print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
-        for code in agent['codes']:
-            elapsed_t = timedelta(seconds=agent['codes'][code])
-            print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
-        print '+--------------------+-----------+--------------------+-------+----------+'
+
+		agent = agent_stats.find_one({'ldap':ldap})
+		if not agent:
+			print "Error: " + ldap + " is not logged in the system"
+			signalHandler(None, None)
+		else:
+			print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
+			for code in agent['codes']:
+				elapsed_t = timedelta(seconds=agent['codes'][code])
+				print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
+			print '+--------------------+-----------+--------------------+-------+----------+'
 
 def signalHandler(signal, frame):
     client.disconnect()
@@ -48,12 +53,12 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signalHandler)
 
     try:
-        client = pymongo.MongoClient('localhost', 27017)
+        client = pymongo.MongoClient('mongodb://user:pass@localhost/database')
     except pymongo.errors.ConnectionFailure:
         print "MongoDB: connection failure"
         exit(-1)
 
-    db = client.test
+    db = client.grtd
     agent_stats = db.agentStatus
 
     if len(sys.argv) > 1:
