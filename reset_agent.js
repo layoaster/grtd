@@ -4,7 +4,8 @@
 
 // Connecting to a mongo instance
 cnx = new Mongo("localhost")
-db = cnx.getDB("test");
+db = cnx.getDB("grtd");
+db.auth("user", "pass")
 
 // Dropping the agentStatus collection
 db.agentStatus.remove({})

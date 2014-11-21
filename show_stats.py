@@ -53,7 +53,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signalHandler)
 
     try:
-        client = pymongo.MongoClient('mongodb://user:pass@localhost/database')
+        client = pymongo.MongoClient('mongodb://grtduser:grtdchecker@localhost/grtd')
     except pymongo.errors.ConnectionFailure:
         print "MongoDB: connection failure"
         exit(-1)
