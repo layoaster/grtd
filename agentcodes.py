@@ -21,11 +21,11 @@ from mysql.connector import errorcode
 import pymongo
 
 mysql_config = {
-    'user':             'menal',
-    'password':         'sbt2014',
-    'host':             '10.8.124.79',
-    'database':         'grtd_google',
-    'raise_on_warnings':True,
+    'user':             'user',
+    'password':         'pass',
+    'host':             'localhost',
+    'database':         'db',
+    'raise_on_warnings': True,
 }
 
 MAX_AGENTS = 300
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     ### Connecting to the MongoDB database
     try:
-        client = pymongo.MongoClient('mongodb://grtdroot:grtddev@localhost/grtd')
+        client = pymongo.MongoClient("mongodb://user:pass@localhost/database")
     except pymongo.errors.ConnectionFailure:
         logger.critical("MongoDB: cannot connect to server")
         exit(-1)
