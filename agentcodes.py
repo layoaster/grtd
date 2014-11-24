@@ -15,19 +15,14 @@
 from datetime import datetime, time, timedelta
 from time import sleep
 import logging, signal, sys
+import json
 
 import mysql.connector
 from mysql.connector import errorcode
 import pymongo
 
-mysql_config = {
-    'user':             'user',
-    'password':         'pass',
-    'host':             'localhost',
-    'database':         'db',
-    'raise_on_warnings': True,
-}
 
+CONFIG_FILE = "agentcodes.cfg"
 MAX_AGENTS = 300
 
 
@@ -173,7 +168,7 @@ if __name__ == "__main__":
     # INFO
     # DEBUG
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.CRITICAL)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s',  datefmt='%m/%d/%Y %I:%M:%S %p')
     fh = logging.FileHandler('agentcodes.log')
     fh.setFormatter(formatter)
@@ -182,7 +177,28 @@ if __name__ == "__main__":
     # Setting System's signals handlers to perform a proper exit
     signal.signal(signal.SIGINT, signalHandler)
 
-    ### Connecting to the MySQL database
+    # Retrieving database credentials from config file
+    try:
+        fcfg = open(CONFIG_FILE, 'r')
+    except IOError as err:
+        logger.critical("Config: %s: %s", err.strerror, err.filename)
+        exit(-1)
+
+    cfg = json.load(fcfg)
+    fcfg.close()
+
+    mysql_config = {
+        'user'             : cfg['mysql']['user'],
+        'password'         : cfg['mysql']['pass'],
+        'host'             : cfg['mysql']['host'],
+        'database'         : cfg['mysql']['db'],
+        'raise_on_warnings': True,
+        }
+
+    mongo_uri = "mongodb://" + cfg['mongo']['user'] + ":" + cfg['mongo']['pass'] + "@" + cfg['mongo']['host']+ "/" + cfg['mongo']['db']
+    print mysql_config['user']
+
+    # Connecting to the MySQL database
     try:
         cnx = mysql.connector.connect(**mysql_config)
 
@@ -195,9 +211,9 @@ if __name__ == "__main__":
             logger.critical("MySQL: cannot connect to server: %s", err.msg) 
         exit(-1)
 
-    ### Connecting to the MongoDB database
+    # Connecting to the MongoDB database
     try:
-        client = pymongo.MongoClient("mongodb://user:pass@localhost/database")
+        client = pymongo.MongoClient(mongo_uri)
     except pymongo.errors.ConnectionFailure:
         logger.critical("MongoDB: cannot connect to server")
         exit(-1)

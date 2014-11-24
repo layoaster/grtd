@@ -2,24 +2,24 @@
 
 ### agentcodes.py
 
-By default both mysql and mongo connections parameters are set for a localhost connections, to modify go to:
+Both MySQL and MongoDB connections parameters are taken from the config file *agentcodes.cfg* that looks like the following: 
 
-* MySQL:
-```pyhton
-mysql_config = {
-    'user':             'user',
-    'password':         'pass',
-    'host':             'localhost',
-    'database':         'db',
-    'raise_on_warnings':True,
+```json
+{
+"mysql" : {
+          "host" : "localhost",
+          "db"   : "db1",
+          "user" : "user1", 
+          "pass" : "pass1"
+          }, 
+"mongo" : {
+          "host" : "localhost",
+          "db"   : "db2",
+          "user" : "user2", 
+          "pass" : "pass2"
+          }
 }
 ```
-
-* MongoDB:
-```pyhton
-client = pymongo.MongoClient(host='localhost', port='27017')
-```
-
 **Logging:** the script is designed to log some events, you can set the level by modifying the line 177:
 ```pyhton
 logger.setLevel(logging.LEVEL)
@@ -31,13 +31,24 @@ Levels of logging, from highest urgency to lowest urgency, are:
 * INFO
 * DEBUG
 
-Currently the scripts works with levels DEBUG, INFO (default) and CRITICAL.
+Currently the scripts works with levels DEBUG, INFO and CRITICAL (default).
 
 ### show_stats.py
 
+MongoDB connection's parameters are taken from the config file *show_stats.cfg* that looks like the following:
+
+```json
+{
+"host" : "localhost",
+"db"   : "db",
+"user" : "user", 
+"pass" : "pass"
+}
+```
+
 **Usage:**
-    > show_stats.py - displays info of every agent.
-    > show_stats.py ldap - displays info for the agent with ldap specified
+> show_stats.py - displays info of every agent.
+> show_stats.py ldap - displays info for the agent with ldap specified
 
 
 ### reset_agent.js

@@ -14,8 +14,11 @@
 from datetime import datetime, timedelta, time
 from time import sleep
 import sys, signal
+import json
 
 import pymongo
+
+CONFIG_FILE = "show_stats.cfg"
 
 def refreshData(ldap=None):
     print '+--------------------+-----------+--------------------+-------+----------+'
@@ -24,22 +27,28 @@ def refreshData(ldap=None):
     if not ldap:
         for agent in agent_stats.find():
             print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
+            total_t = timedelta(seconds=0)
             for code in agent['codes']:
                 elapsed_t = timedelta(seconds=agent['codes'][code])
+                total_t += elapsed_t
                 print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
+            print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', 'total', str(total_t))
             print '+--------------------+-----------+--------------------+-------+----------+'
     else:
 
-		agent = agent_stats.find_one({'ldap':ldap})
-		if not agent:
-			print "Error: " + ldap + " is not logged in the system"
-			signalHandler(None, None)
-		else:
-			print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
-			for code in agent['codes']:
-				elapsed_t = timedelta(seconds=agent['codes'][code])
-				print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
-			print '+--------------------+-----------+--------------------+-------+----------+'
+        agent = agent_stats.find_one({'ldap':ldap})
+        if not agent:
+            print "Error: " + ldap + " is not logged in the system"
+            signalHandler(None, None)
+        else:
+            total_t = timedelta(seconds=0)
+            print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
+            for code in agent['codes']:
+                elapsed_t = timedelta(seconds=agent['codes'][code])
+                total_t += elapsed_t
+                print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
+            print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', 'total', str(total_t))
+            print '+--------------------+-----------+--------------------+-------+----------+'
 
 def signalHandler(signal, frame):
     client.disconnect()
@@ -52,8 +61,20 @@ if __name__ == "__main__":
     # Setting System's signals handlers to perform a proper exit
     signal.signal(signal.SIGINT, signalHandler)
 
+    # Retrieving database credentials from config file
     try:
-        client = pymongo.MongoClient("mongodb://user:pass@localhost/database")
+        fcfg = open(CONFIG_FILE, 'r')
+    except IOError as err:
+        print "Error: " + err.strerror + ": " + err.filename
+        exit(-1)
+
+    cfg = json.load(fcfg)
+    fcfg.close()
+    mongo_uri = "mongodb://" + cfg['user'] + ":" + cfg['pass'] + "@" + cfg['host']+ "/" + cfg['db']
+
+    # Connecting to MongoDB
+    try:
+        client = pymongo.MongoClient(mongo_uri)
     except pymongo.errors.ConnectionFailure:
         print "MongoDB: connection failure"
         exit(-1)
