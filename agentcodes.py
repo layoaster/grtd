@@ -196,7 +196,6 @@ if __name__ == "__main__":
         }
 
     mongo_uri = "mongodb://" + cfg['mongo']['user'] + ":" + cfg['mongo']['pass'] + "@" + cfg['mongo']['host']+ "/" + cfg['mongo']['db']
-    print mysql_config['user']
 
     # Connecting to the MySQL database
     try:
