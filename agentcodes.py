@@ -17,13 +17,10 @@ from time import sleep
 import logging, signal, sys
 import json
 
-import mysql.connector
-from mysql.connector import errorcode
 import pymongo
 
 
 CONFIG_FILE = "agentcodes.cfg"
-MAX_AGENTS = 300
 
 
 class Agent:
