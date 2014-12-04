@@ -3,7 +3,7 @@
    More specifically, It will calulate the times that every logged agent spent for each code on a daily basis.
    The resulted data is to be used/displayed on other applications.
 
-   The raw data is obtained from a MySQL database, which it's updated every 15 seconds and, only relevant 
+   The raw data is obtained from a raw data collection, which it's updated every 15 seconds and, only relevant 
    information for every agent is taken and/or calculated such as the elapsed time for every code, login id,
    ldap, etc. The information is stored on a MongoDB database (test) where the collection agentStatus contains 
    a single document per agent.
@@ -44,35 +44,29 @@ class Agent:
         self._tstamp = None
         self._codes = []    
     
-    def fromMongoDB(self, agent):
-        """Initialize Agent from a Mongo document"""
-        self._login_id = agent['_id']
+ 
+    def fromRaw(self, agent):
+        """Initialize Agent from the agent raw data collection
+        """
+        self._login_id = agent['login_id']
         self._ldap = agent['ldap']
-        self._last_code = agent['last_code']
-        self._tstamp = agent['tstamp']
-        self._codes = agent['codes']
+        self._last_code = agent['reason']
+        self._tstamp = (agent['_id'].generation_time.replace(tzinfo=None)) + timedelta(hours=1)
+        self._codes = {self._last_code : agent['elapsed_time']}
 
-    def fromMySQL(self, login_id=None, ldap=None, code=None, tstamp=None, elapsed_time=None):
-        """Initialize Agent from the MySQL raw data"""
-        self._login_id = login_id
-        self._ldap = ldap
-        self._last_code = str(code)
-        self._tstamp = tstamp
-        #Convert elapsed_time in seconds
-        self._codes = {self._last_code:elapsed_time.total_seconds()}
 
-    def dataUpdate(self, coll):
+    def dbUpdate(self, coll):
         """Manage to insert/update the proper information in MongoDB db
 
         Args:
-            coll: Instance of the MongoDB collection where agent's data is stored/updated
+            collec: Instance of the MongoDB collection where agent's data is stored/updated
         """
-        db_data = coll.find_one({'_id':self._login_id})
+        db_data = coll.find_one({'login_id':self._login_id})
 
         # Testing whether the agent has already started working today or not
         if not db_data:
-            logger.info("Agent %s has just logged in", self._ldap)
-            data = {'_id':self._login_id, 
+            logger.debug("Agent %s has just logged in", self._ldap)
+            data = {'login_id':self._login_id, 
                     'ldap':self._ldap,
                     'last_code':self._last_code,
                     'tstamp':self._tstamp,
@@ -84,9 +78,9 @@ class Agent:
         else: # Updating code times for an agent that is currently working
             # Agent has changed to a new code (not in the database)
             if not db_data['codes'].has_key(self._last_code):
-                logger.info("Agent %s has just changed to a new code: %s", self._ldap, self._last_code)
+                logger.debug("Agent %s has just changed to a new code: %s", self._ldap, self._last_code)
 
-                coll.update({'_id':self._login_id},
+                coll.update({'login_id':self._login_id},
                           {'$set': {'codes.'+self._last_code:self._codes[self._last_code], 
                           'last_code':self._last_code, 
                           'tstamp':self._tstamp}})
@@ -98,25 +92,27 @@ class Agent:
                     old_time = timedelta(seconds=db_data['codes'][self._last_code])
                     new_time = old_time + (self._tstamp - db_data['tstamp'])
 
-                    coll.update({'_id':self._login_id},
+                    coll.update({'login_id':self._login_id},
                             {'$set': {'codes.'+self._last_code:new_time.total_seconds(), 
                             'tstamp':self._tstamp}})
 
+                    logger.debug("Agent %s still on the same code code: %s", self._ldap, self._last_code)
                     logger.debug("Code %s - Calculated elapsed time [%s]", self._last_code, str(new_time))
                 # Diferent code: just adding the initial elapsed time to the total
                 else:
                     new_time = db_data['codes'][self._last_code] + self._codes[self._last_code]                   
-                    coll.update({'_id':self._login_id},
+                    coll.update({'login_id':self._login_id},
                             {'$set': {'codes.'+self._last_code:new_time, 
                             'last_code':self._last_code, 
                             'tstamp':self._tstamp}})
 
-                    logger.info("Agent %s switched from  %s to %s", self._ldap, db_data['last_code'], self._last_code)
+                    logger.debug("Agent %s switched from  %s to %s", self._ldap, db_data['last_code'], self._last_code)
                     logger.debug("Code %s - Calculated elapsed time [%s]", self._last_code, str(timedelta(seconds=new_time)))
 
 
     def _printData(self):
-        """Prints the class attributes for debbuging"""
+        """Prints the class attributes for debbuging
+        """
         print "-------------------"
         print "Login ID: " + str(self._login_id)
         print "Agent (ldap): " + self._ldap
@@ -128,33 +124,24 @@ class Agent:
         print "-------------------"
 
 
-#Pulling agent's raw data from the MySQL db
-def getRawInfo():
-    cursor = cnx.cursor(buffered=True)
-    query = """SELECT agent_name, login_id, reason, tstamp, elapsed_time FROM rtv_data
-               ORDER BY tstamp DESC
-               LIMIT 0, %s
-            """
-    cursor.execute(query, (MAX_AGENTS, ))
+def processRawInfo():
+    """ Process every single agent's raw data to update its stats/timmings
 
-    total_agents = set() #To avoid reprocess old data
+    """
+    cursor = raw_grtd.find(fields=['login_id','ldap', 'reason', 'elapsed_time', 'tstamp'])
     agent = Agent()
 
-    for agent_name, login_id, reason, tstamp, elapsed_time in cursor:
-        if agent_name not in total_agents:
-            total_agents.add(agent_name) 
+    for raw_agent in cursor:
+        agent.fromRaw(raw_agent)
+        agent.dbUpdate(agent_stats)
 
-            agent.fromMySQL(login_id, agent_name,reason, tstamp, elapsed_time)
-            agent.dataUpdate(agent_stats)
-        else:
-            break
-
-    cnx.commit()
 
 def signalHandler(signal, frame):
+    """ Capture SIGINT signal to terminate the script and close DB's connection
+
+    """
     logger.info(" Program terminated by user: Signal SIGINT received")
 
-    cnx.close()
     client.disconnect()
     sys.exit(0)
 
@@ -186,30 +173,8 @@ if __name__ == "__main__":
 
     cfg = json.load(fcfg)
     fcfg.close()
-
-    mysql_config = {
-        'user'             : cfg['mysql']['user'],
-        'password'         : cfg['mysql']['pass'],
-        'host'             : cfg['mysql']['host'],
-        'database'         : cfg['mysql']['db'],
-        'raise_on_warnings': True,
-        }
-
-    mongo_uri = "mongodb://" + cfg['mongo']['user'] + ":" + cfg['mongo']['pass'] + "@" + cfg['mongo']['host']+ "/" + cfg['mongo']['db']
-    print mysql_config['user']
-
-    # Connecting to the MySQL database
-    try:
-        cnx = mysql.connector.connect(**mysql_config)
-
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            logger.critical("MySQL: access denied for user: %s", mysql_config['user']) 
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            logger.critical("MySQL: database does not exist") 
-        else:
-            logger.critical("MySQL: cannot connect to server: %s", err.msg) 
-        exit(-1)
+   
+    mongo_uri = "mongodb://" + cfg['user'] + ":" + cfg['pass'] + "@" + cfg['host'] + ":" + cfg['port'] + "/" + cfg['db']
 
     # Connecting to the MongoDB database
     try:
@@ -219,11 +184,12 @@ if __name__ == "__main__":
         exit(-1)
 
     db = client.grtd
+    raw_grtd = db.grtdRTV
     agent_stats = db.agentStatus
-
+    
     while (1):
         # start_time = time.time()
-        getRawInfo()
+        processRawInfo()
         # print str(time.time() - start_time)
         sleep(15)
         

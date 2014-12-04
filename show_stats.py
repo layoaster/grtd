@@ -57,20 +57,21 @@ def signalHandler(signal, frame):
     sys.exit(0)
 
 if __name__ == "__main__":
-
+    
     # Setting System's signals handlers to perform a proper exit
     signal.signal(signal.SIGINT, signalHandler)
 
     # Retrieving database credentials from config file
     try:
-        fcfg = open(CONFIG_FILE, 'r')
+        fcfg_path = sys.path[0] + "/" + CONFIG_FILE
+        fcfg = open(fcfg_path, 'r')
     except IOError as err:
         print "Error: " + err.strerror + ": " + err.filename
         exit(-1)
 
     cfg = json.load(fcfg)
     fcfg.close()
-    mongo_uri = "mongodb://" + cfg['user'] + ":" + cfg['pass'] + "@" + cfg['host']+ "/" + cfg['db']
+    mongo_uri = "mongodb://" + cfg['user'] + ":" + cfg['pass'] + "@" + cfg['host'] + ":" + cfg['port'] + "/" + cfg['db']
 
     # Connecting to MongoDB
     try:
