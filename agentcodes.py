@@ -192,5 +192,3 @@ if __name__ == "__main__":
         processRawInfo()
         # print str(time.time() - start_time)
         sleep(15)
-        
-    
