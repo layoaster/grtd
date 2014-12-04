@@ -6,18 +6,11 @@ Both MySQL and MongoDB connections parameters are taken from the config file *ag
 
 ```json
 {
-"mysql" : {
-          "host" : "localhost",
-          "db"   : "db1",
-          "user" : "user1", 
-          "pass" : "pass1"
-          }, 
-"mongo" : {
-          "host" : "localhost",
-          "db"   : "db2",
-          "user" : "user2", 
-          "pass" : "pass2"
-          }
+    "host" : "localhost",
+    "port" : "27017",
+    "db"   : "db",
+    "user" : "dbuser",  
+    "pass" : "dbpass"
 }
 ```
 **Logging:** the script is designed to log some events, you can set the level by modifying the line 177:
