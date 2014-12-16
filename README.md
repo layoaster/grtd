@@ -41,7 +41,7 @@ MongoDB connection's parameters are taken from the config file *show_stats.cfg* 
 
 **Usage:**
 > show_stats.py - displays info of every agent.
-> show_stats.py ldap - displays info for the agent with ldap specified
+> show_stats.py ldap1 ldap2 ldapn - displays info for the agent with ldap/s specified
 
 
 ### reset_agent.js
