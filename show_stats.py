@@ -19,7 +19,7 @@ import pymongo
 CONFIG_FILE = "show_stats.cfg"
 
 def refreshData(ldap_list=None):
-    """Retrieve agent information from the DB.
+    """Retrieves agent information from the DB.
 
         Args:
             ldap_list: list of ldap to be looked up, if None every single agent on the system will be
@@ -40,7 +40,7 @@ def refreshData(ldap_list=None):
                 printStats(agent)
 
 def printStats(agent):
-    """Display agent information on the standar output.
+    """Displays agent information on the standar output.
 
         Args:
             agent: agent's DB record to be displayed.
@@ -69,7 +69,7 @@ def printStats(agent):
     print '|                                +----------------------------+----------+'
 
     print '| {0:30} | {1:>26} | {2:8} |'.format('', 'Total', str(total_t))
-    print '+--------------------+-----------+----------------------------+----------+\n'
+    print '+--------------------------------+----------------------------+----------+\n'
 
 def signalHandler(signal, frame):
     """ Capture SIGINT signal to terminate the script and close DB's connection
@@ -79,7 +79,7 @@ def signalHandler(signal, frame):
 
     print "Ending session"
     sys.exit(0)
-    
+
 
 if __name__ == "__main__":
 
