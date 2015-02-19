@@ -14,8 +14,11 @@
 
 from datetime import datetime, time, timedelta
 from time import sleep
-import logging, signal, sys
+import logging
+import signal 
+import sys
 import json
+import re
 
 import pymongo
 
@@ -133,6 +136,30 @@ def processRawInfo():
         agent.dbUpdate(agent_stats)
 
 
+def earlyInfo():
+    """ Check for the existence of historicData to get timmings of agents working early shifts (before 9am)
+        to update agentStatus accordingly.
+    """
+    ldap_list = agent_stats.find(fields=['ldap', 'codes'])
+    for agent in ldap_list:
+        hdata = historic_data.find_one({"ldap":agent['ldap']})
+        if hdata is not None:
+            regex_code = re.compile("\d{1,5}$")
+            for field in hdata.keys():
+                if regex_code.match(field):
+                    if (hdata[field] > 0):
+                        if field in agent['codes'].keys():
+                            if hdata[field] > agent['codes'][field]:
+                                agent['codes'][field] = hdata[field]
+                        else:
+                            agent['codes'][field] = hdata[field]
+
+            agent_stats.update({'ldap':agent['ldap']}, {'$set': {'codes':agent['codes']}})
+        else:
+            logger.info("Early updater: Agent %s has no record on historicData collection", agent['ldap'])
+    historic_data.drop()
+
+
 def signalHandler(signal, frame):
     """ Capture SIGINT signal to terminate the script and close DB's connection
 
@@ -152,7 +179,7 @@ if __name__ == "__main__":
     # INFO
     # DEBUG
     logger = logging.getLogger()
-    logger.setLevel(logging.CRITICAL)
+    logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s',  datefmt='%m/%d/%Y %I:%M:%S %p')
     fh = logging.FileHandler('agentcodes.log')
     fh.setFormatter(formatter)
@@ -183,9 +210,13 @@ if __name__ == "__main__":
     db = client.grtd
     raw_grtd = db.grtdRTV
     agent_stats = db.agentStatus
+    historic_data = db.historicData
     
     while (1):
         # start_time = time.time()
+        # Dumping historic to syncshronize/update agentStatus code's timmings
+        if "historicData" in db.collection_names():
+            earlyInfo()
         processRawInfo()
         # print str(time.time() - start_time)
         sleep(15)
