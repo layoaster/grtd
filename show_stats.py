@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, time
 from time import sleep
 import sys, signal
 import json
+import argparse
 
 import pymongo
 
@@ -75,7 +76,7 @@ def signalHandler(signal, frame):
     """ Capture SIGINT signal to terminate the script and close DB's connection
 
     """
-    client.disconnect()
+    client.close()
 
     print "Ending session"
     sys.exit(0)
@@ -86,13 +87,20 @@ if __name__ == "__main__":
     # Setting System's signals handlers to perform a proper exit
     signal.signal(signal.SIGINT, signalHandler)
 
+    # Parsing command line options
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-l", action="store_true", help="to show data in an infiniteloop ")
+    parser.add_argument("ldap_list", nargs="+", help="Ldap or list of ldaps to show data for ")
+    args = parser.parse_args()
+
+
     # Retrieving database credentials from config file
     try:
-            fcfg_path = sys.path[0] + "/" + CONFIG_FILE
-            fcfg = open(fcfg_path, 'r')
+        fcfg_path = sys.path[0] + "/" + CONFIG_FILE
+        fcfg = open(fcfg_path, 'r')
     except IOError as err:
-            print "Error: " + err.strerror + ": " + err.filename
-            exit(-1)
+        print "Error: " + err.strerror + ": " + err.filename
+        exit(-1)
 
     cfg = json.load(fcfg)
     fcfg.close()
@@ -108,13 +116,10 @@ if __name__ == "__main__":
     db = client.grtd
     agent_stats = db.agentStatus
 
-    if len(sys.argv) > 1:
-         ldap_list = sys.argv[1:]
-    else:
-         ldap_list = None
+    while (args.l):
+        refreshData(args.ldap_list)
+        sleep(15)
 
-    while (1):
-         refreshData(ldap_list)
-         sleep(15)
+    refreshData(args.ldap_list)
 
-    client.disconnect()
+    client.close()
