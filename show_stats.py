@@ -10,6 +10,7 @@
 """
 
 from datetime import datetime, timedelta, time
+from dateutil import tz
 from time import sleep
 import sys, signal
 import json
@@ -49,11 +50,15 @@ def printStats(agent):
     break_lunch = timedelta(seconds=0)
     break_codes = {5,6,7}
 
+    #Converting from UTC to local
+    tstamp = agent['tstamp'].replace(tzinfo=tz.tzutc())
+    tstamp = tstamp.astimezone(tz.tzlocal())
+
     print '+--------------------+-----------+--------------------+-------+----------+'
     print '| {0:^18} | {1:^9} | {2:^19}| {3:^5} | {4:^8} |'.format('Agent', 'Last Code', 'Timestamp', 'Code', 'Duration')
     print '+--------------------+-----------+--------------------+-------+----------+'
 
-    print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], str(agent['tstamp']), '', '')
+    print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format(agent['ldap'], agent['last_code'], tstamp.strftime("%Y-%m-%d %X"), '', '')
     total_t = timedelta(seconds=0)
     for code in agent['codes']:
         elapsed_t = timedelta(seconds=agent['codes'][code])
