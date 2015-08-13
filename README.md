@@ -41,8 +41,8 @@ MongoDB connection's parameters are taken from the config file *show_stats.cfg* 
 
 **Usage:**
 > show_stats.py - displays info of every agent.
-> show_stats.py ldap1 ldap2 ldapn - displays info for the agent with ldap/s specified
-
+> show_stats.py [-l] ldap1 [ldap2 ... ldapn] - displays info (looping or not) for the agent with ldap/s specified.
+> show_stats.py  -p - displays info of the cloud agents that are currently on the phones.
 
 ### reset_agent.js
 

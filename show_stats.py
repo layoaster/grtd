@@ -20,6 +20,9 @@ import pymongo
 
 CONFIG_FILE = "show_stats.cfg"
 
+CLOUD = ('menal', 'clallana', 'javierruiz', 'nuchaev', 'camaram', 'marcialr', 'bizquierdo', 'ejay',
+         'barbachano', 'dalys', 'efallos', 'giegling', 'miacob', 'svilloldo', 'mbobillot', 'jcavero')
+
 def refreshData(ldap_list=None):
     """Retrieves agent information from the DB.
 
@@ -77,6 +80,27 @@ def printStats(agent):
     print '| {0:30} | {1:>26} | {2:8} |'.format('', 'Total', str(total_t))
     print '+--------------------------------+----------------------------+----------+\n'
 
+def phoneStats():
+    """Displays agents who is on Auto-In (only Cloud team).
+
+    """
+    agent_list = agent_stats.find({'ldap' : {'$in': CLOUD }})
+    p_list = []
+
+    for agent in agent_list:
+        if agent['last_code'] == '9999':
+            p_list.insert(0, (agent['ldap'], '  \x1b[1;32m' + 'On' + '\x1b[0m   '))
+        else:
+            p_list.append((agent['ldap'], '  \x1b[1;31m' + 'Off' + '\x1b[0m  '))
+
+    print '+---------------+---------+'
+    print '| {0:^13} | {1:^7} |'.format('Agent', 'Auto-In')
+    print '+---------------+---------+'
+
+    for item in p_list:
+        print '| {0:13} | {1:^7} |'.format(item[0], item[1])
+        print '+---------------+---------+'
+
 def signalHandler(signal, frame):
     """ Capture SIGINT signal to terminate the script and close DB's connection
 
@@ -95,7 +119,8 @@ if __name__ == "__main__":
     # Parsing command line options
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", action="store_true", help="to show data in an infiniteloop ")
-    parser.add_argument("ldap_list", nargs="+", help="Ldap or list of ldaps to show data for ")
+    parser.add_argument("-p", action="store_true", help="to show the list of people on Auto-In")
+    parser.add_argument("ldap_list", nargs="*", help="Ldap or list of ldaps to show data for ")
     args = parser.parse_args()
 
 
@@ -125,6 +150,9 @@ if __name__ == "__main__":
         refreshData(args.ldap_list)
         sleep(15)
 
-    refreshData(args.ldap_list)
+    if args.p:
+        phoneStats()
+    else:
+        refreshData(args.ldap_list)
 
     client.close()
