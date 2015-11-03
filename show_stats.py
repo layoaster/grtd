@@ -51,7 +51,7 @@ def printStats(agent):
             agent: agent's DB record to be displayed.
     """
     break_lunch = timedelta(seconds=0)
-    break_codes = {5,6,7}
+    break_codes = ('5','6','7')
 
     #Converting from UTC to local
     tstamp = agent['tstamp'].replace(tzinfo=tz.tzutc())
@@ -67,7 +67,7 @@ def printStats(agent):
         elapsed_t = timedelta(seconds=agent['codes'][code])
         total_t += elapsed_t
         print '| {0:18} | {1:9} | {2:19}| {3:5} | {4:8} |'.format('', '', '', code, str(elapsed_t))
-        if int(code) in break_codes:
+        if code in break_codes:
             break_lunch += elapsed_t
 
     print '+--------------------+-----------+--------------------+-------+----------+'
@@ -98,7 +98,7 @@ def phoneStats():
     print '+---------------+---------+'
 
     for item in p_list:
-        print '| {0:13} | {1:^7} |'.format(item[0], item[1])
+        print '| {0:13} | {1:^10} |'.format(item[0], item[1])
         print '+---------------+---------+'
 
 def signalHandler(signal, frame):
