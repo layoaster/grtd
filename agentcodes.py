@@ -51,7 +51,7 @@ class Agent:
         self._login_id = agent['login_id']
         self._ldap = agent['ldap']
         self._last_code = agent['reason']
-        self._tstamp = (agent['_id'].generation_time.replace(tzinfo=None)) + timedelta(hours=1)
+        self._tstamp = agent['_id'].generation_time.replace(tzinfo=None) #UTC Timezone
         self._codes = {self._last_code : agent['elapsed_time']}
 
 
@@ -128,7 +128,7 @@ def processRawInfo():
     """ Process every single agent's raw data to update its stats/timmings
 
     """
-    cursor = raw_grtd.find(fields=['login_id','ldap', 'reason', 'elapsed_time', 'tstamp'])
+    cursor = raw_grtd.find(projection=['login_id','ldap', 'reason', 'elapsed_time', 'tstamp'])
     agent = Agent()
 
     for raw_agent in cursor:
@@ -140,24 +140,35 @@ def earlyInfo():
     """ Check for the existence of historicData to get timmings of agents working early shifts (before 9am)
         to update agentStatus accordingly.
     """
-    ldap_list = agent_stats.find(fields=['ldap', 'codes'])
+    ldap_list = agent_stats.find(projection=['ldap', 'codes'])
     for agent in ldap_list:
         hdata = historic_data.find_one({"ldap":agent['ldap']})
         if hdata is not None:
             regex_code = re.compile("\d{1,5}$")
             for field in hdata.keys():
                 if regex_code.match(field):
-                    if (hdata[field] > 0):
+                    if hdata[field] > 0:
                         if field in agent['codes'].keys():
                             if hdata[field] > agent['codes'][field]:
                                 agent['codes'][field] = hdata[field]
                         else:
                             agent['codes'][field] = hdata[field]
-
+                        #------- debugging ------
+                        try:
+                            if hdata[field] > 46800:
+                                logger.warning("Agent %s has a weird historicData: %s collection", agent['ldap'], field, str(timedelta(seconds=agent['codes'][field])))
+                        except Exception:
+                            logger.error("Debugging code is failing")
+                            pass
+                       #--------------
             agent_stats.update({'ldap':agent['ldap']}, {'$set': {'codes':agent['codes']}})
         else:
-            logger.info("Early updater: Agent %s has no record on historicData collection", agent['ldap'])
-    historic_data.drop()
+            logger.debug("Early updater: Agent %s has no record on historicData collection", agent['ldap'])
+    try:
+        historic_data.drop()
+        logger.debug("historicData deleted")
+    except PyMongoError:
+        logger.warning("historicData couldn't be deleted")
 
 
 def signalHandler(signal, frame):
@@ -166,7 +177,7 @@ def signalHandler(signal, frame):
     """
     logger.info(" Program terminated by user: Signal SIGINT received")
 
-    client.disconnect()
+    client.close()
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -179,11 +190,13 @@ if __name__ == "__main__":
     # INFO
     # DEBUG
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.WARNING)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s',  datefmt='%m/%d/%Y %I:%M:%S %p')
     fh = logging.FileHandler('agentcodes.log')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
+    logger.info("Script started")
 
     # Setting System's signals handlers to perform a proper exit
     signal.signal(signal.SIGINT, signalHandler)
